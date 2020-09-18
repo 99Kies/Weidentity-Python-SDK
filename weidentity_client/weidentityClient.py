@@ -99,7 +99,7 @@ class weidentityClient(Base):
                 "data": data,
                 "signedMessage": signedMessage
             },
-            "functionName": "registerAuthorityIssuer",
+            "functionName": "registerCpt",
             "v": self.version
         }
         return self.post("/weid/api/transact", data=data)
