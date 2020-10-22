@@ -1,7 +1,7 @@
 import requests
 import logging
-from pprint import pprint
-from Base import Base
+from .Base import Base
+import time
 
 LOG = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ class weidentityClient(Base):
 
     def create_weidentity_did_first(self, publicKey, nonce):
         # 创建WeIdentity DID
-        data = {
+        data_dict = {
             "functionArg": {
                 "publicKey": publicKey
             },
@@ -21,11 +21,11 @@ class weidentityClient(Base):
             "functionName": "createWeId",
             "v": self.version
         }
-        return self.post("/weid/api/encode", data=data)
+        return self.post("/weid/api/encode", data=data_dict)
 
     def create_weidentity_did_second(self, nonce, data, signedMessage):
         # 创建WeIdentity DID
-        data = {
+        data_dict = {
             "functionArg": {},
             "transactionArg": {
                 "nonce": nonce,
@@ -35,7 +35,7 @@ class weidentityClient(Base):
             "functionName": "createWeId",
             "v": self.version
         }
-        return self.post("/weid/api/transact", data=data)
+        return self.post("/weid/api/transact", data=data_dict)
 
     def create_weidentity_did(self, publicKey, nonce, data, signedMessage):
         self.create_weidentity_did_first(publicKey, nonce)
@@ -43,7 +43,7 @@ class weidentityClient(Base):
 
     def register_authority_issuer_first(self, name, weId, nonce):
         # 注册Authority Issuer
-        data = {
+        data_dict = {
             "functionArg": {
                 "name": name,
                 "weId": weId
@@ -54,11 +54,11 @@ class weidentityClient(Base):
             "functionName": "registerAuthorityIssuer",
             "v": self.version
         }
-        return self.post("/weid/api/encode", data=data)
+        return self.post("/weid/api/encode", data=data_dict)
 
     def register_authority_issuer_second(self, nonce, data, signedMessage):
         # 注册Authority Issuer
-        data = {
+        data_dict = {
             "functionArg": {},
             "transactionArg": {
                 "nonce": nonce,
@@ -68,7 +68,7 @@ class weidentityClient(Base):
             "functionName": "registerAuthorityIssuer",
             "v": self.version
         }
-        return self.post("/weid/api/transact", data=data)
+        return self.post("/weid/api/transact", data=data_dict)
 
     def register_authority_issuer(self, name, weId, nonce, data, signedMessage):
         self.register_authority_issuer_first(name, weId, nonce)
@@ -76,7 +76,7 @@ class weidentityClient(Base):
 
     def create_cpt_first(self, weId, cptJsonSchema, cptSignature, nonce):
         # 创建CPT
-        data = {
+        data_dict = {
             "functionArg": {
                 "weId": weId,
                 "cptJsonSchema": cptJsonSchema,
@@ -88,11 +88,11 @@ class weidentityClient(Base):
             "functionName": "registerCpt",
             "v": self.version
         }
-        return self.post("/weid/api/encode", data=data)
+        return self.post("/weid/api/encode", data=data_dict)
 
     def create_cpt_second(self, nonce, data, signedMessage):
         # 创建CPT
-        data = {
+        data_dict = {
             "functionArg": {},
             "transactionArg": {
                 "nonce": nonce,
@@ -102,7 +102,7 @@ class weidentityClient(Base):
             "functionName": "registerCpt",
             "v": self.version
         }
-        return self.post("/weid/api/transact", data=data)
+        return self.post("/weid/api/transact", data=data_dict)
 
     def create_cpt(self, name, weId, nonce, data, signedMessage):
         self.register_authority_issuer_first(name, weId, nonce)
@@ -110,7 +110,9 @@ class weidentityClient(Base):
 
     def create_credential_pojo(self, cptId, issuer_weid, expirationDate, claim):
         # 创建CredentialPojo
-        data = {
+        if isinstance(expirationDate, int):
+            expirationDate = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(expirationDate))
+        data_dict = {
             "functionArg": {
                 "cptId": cptId,
                 "issuer": issuer_weid,
@@ -122,14 +124,4 @@ class weidentityClient(Base):
             "functionName": "createCredentialPojo",
             "v": self.version
         }
-        return self.post("/weid/api/encode", data=data)
-
-
-weid = weidentityClient("http://192.168.80.140:6001")
-create_1 = weid.create_weidentity_did_first(publicKey="712679236821355231513532168231727831978932132185632517152735621683128", nonce="1474800601011307365506121304576347479508653499989424346408343855615822146039")
-pprint(create_1)
-create_2 = weid.create_weidentity_did_second(nonce="1474800601011307365506121304576347479508653499989424346408343855615822146039", data="809812638256c1235b1231000e000000001231287bacf213c", signedMessage="HEugP13uDVBg2G0kmmwbTkQXobsrWNqtGQJW6BoHU2Q2VQpwVhK382dArRMFN6BDq7ogozYBRC15QR8ueX5G3t8=")
-pprint(create_2)
-
-create_f = weid.create_weidentity_did(publicKey="712679236821355231513532168231727831978932132185632517152735621683128", nonce="1474800601011307365506121304576347479508653499989424346408343855615822146039", data="809812638256c1235b1231000e000000001231287bacf213c", signedMessage="HEugP13uDVBg2G0kmmwbTkQXobsrWNqtGQJW6BoHU2Q2VQpwVhK382dArRMFN6BDq7ogozYBRC15QR8ueX5G3t8=")
-pprint(create_f)
+        return self.post("/weid/api/encode", data=data_dict)
