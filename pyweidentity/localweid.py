@@ -29,21 +29,13 @@ def create_random_weid():
     }
     return data
 
-def create_watting_weid(privkey):
-    # 通过get的方式传送一个privkey data。
-    account = generate_addr(priv=privkey)
-    addr = account["payload"]["addr"]
-    # 拼接weid，这里CHAIN_ID是留给上链用的。
-    weid = "did:weid:{addr}".format(addr=addr)
-    data = {
-        "privateKeyHex": account["payload"]["priv"],
-        "publicKeyHex": account["payload"]["pubv"],
-        "privateKeyInt": str(int(account["payload"]["priv"], 16)),
-        "publicKeyInt": str(int(account["payload"]["pubv"], 16)),
-        "weId": weid,
-    }
-    return data
+def priv_to_public(privkey):
+    if privkey[:2] == "0x":
+        account = generate_addr(priv=privkey[2:])
+    else:
+        account = generate_addr(priv=hex(int(privkey))[2:])
 
+    return account["payload"]["pubv"]
 
 def create_weid_by_privkey(privkey, chain_id):
     if privkey[:2] == "0x":

@@ -4,6 +4,9 @@ import hashlib
 import base64
 import sha3
 from ecdsa import SigningKey, SECP256k1
+from pyweidentity.localweid import generate_addr
+from Crypto.Hash import keccak
+from eth_account import Account
 
 LOG = logging.getLogger(__name__)
 class Base(object):
@@ -40,7 +43,50 @@ class Base(object):
             return None
         return response.json()
 
+    # def priv_to_public_hex(self, privkey):
+    #     if privkey[:2] == "0x":
+    #         account = generate_addr(priv=privkey[2:])
+    #     else:
+    #         account = generate_addr(priv=hex(int(privkey))[2:])
+    #
+    #     publickey = account["payload"]["pubv"]
+    #     return publickey
+
+    def priv_to_public(self, privkey):
+        if privkey[:2] == "0x":
+            account = generate_addr(priv=privkey[2:])
+        else:
+            account = generate_addr(priv=hex(int(privkey))[2:])
+
+        publickey = str(int(account["payload"]["pubv"], 16))
+        return publickey
+
+
+    def weid_ecdsa_sign(self, privKey, encode_transaction):
+        # 轻客户端模式的二次签名 signType is 1.
+        account = Account.privateKeyToAccount(privKey)
+        raw_tx_bytes = base64.b64decode(encode_transaction)
+
+        msg = keccak.new(digest_bits=256)
+        msg.update(raw_tx_bytes)
+
+        sig = account.signHash(msg.digest())
+        if (len(hex(sig.r)[2:]) % 2) == 0:
+            hexed_r = hex(sig.r)[2:]
+        else:
+            hexed_r = "0" + hex(sig.r)[2:]
+        if (len(hex(sig.s)[2:]) % 2) == 0:
+            hexed_s = hex(sig.s)[2:]
+        else:
+            hexed_s = "0" + hex(sig.s)[2:]
+        b_sig = bytes(bytearray.fromhex(hex(sig.v)[2:] + hexed_r + hexed_s))
+        b_64_sig = base64.b64encode(b_sig).decode()
+        # print("sig: {sig}".format(sig=b_64_sig))
+        return b_64_sig
+
     def ecdsa_sign(self, encode_transaction, privkey, hashfunc=hashlib.sha256):
+        # 生成证书时需要用到的ecdsa签名
+
         signning_key = SigningKey.from_string(bytes.fromhex(privkey), curve=SECP256k1)
         # encode_transaction = respBody['respBody']['encodedTransaction']
         # base64解密

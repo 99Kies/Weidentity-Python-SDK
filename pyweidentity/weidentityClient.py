@@ -1,4 +1,3 @@
-import requests
 import logging
 from .Base import Base
 import time
@@ -23,13 +22,15 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/encode", data=data_dict)
 
-    def create_weidentity_did_second(self, nonce, data, signedMessage):
+    def create_weidentity_did_second(self, nonce, data, signedMessage, blockLimit, signType="1"):
         # 创建WeIdentity DID
         data_dict = {
             "functionArg": {},
             "transactionArg": {
                 "nonce": nonce,
                 "data": data,
+                "blockLimit": blockLimit,
+                "signType": signType,
                 "signedMessage": signedMessage
             },
             "functionName": "createWeId",
@@ -37,9 +38,19 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/transact", data=data_dict)
 
-    def create_weidentity_did(self, publicKey, nonce, data, signedMessage):
-        self.create_weidentity_did_first(publicKey, nonce)
-        return self.create_weidentity_did_second(nonce, data, signedMessage)
+    def create_weidentity_did(self, privKey, nonce, signType="1"):
+        publicKey = self.priv_to_public(privKey)
+        respBody = self.create_weidentity_did_first(publicKey, nonce)
+        encode_transaction = respBody['respBody']['encodedTransaction']
+
+        blockLimit = respBody['respBody']['blockLimit']
+
+        raw_result = self.weid_ecdsa_sign(privKey, encode_transaction)
+
+        weid_second = self.create_weidentity_did_second(nonce, data=respBody['respBody']['data'], blockLimit=blockLimit,
+                                                        signType=signType, signedMessage=raw_result)
+
+        return weid_second
 
     def register_authority_issuer_first(self, name, weId, nonce):
         # 注册Authority Issuer
@@ -56,13 +67,15 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/encode", data=data_dict)
 
-    def register_authority_issuer_second(self, nonce, data, signedMessage):
+    def register_authority_issuer_second(self, nonce, data, signedMessage, blockLimit, signType="1"):
         # 注册Authority Issuer
         data_dict = {
             "functionArg": {},
             "transactionArg": {
                 "nonce": nonce,
                 "data": data,
+                "blockLimit": blockLimit,
+                "signType": signType,
                 "signedMessage": signedMessage
             },
             "functionName": "registerAuthorityIssuer",
@@ -70,9 +83,21 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/transact", data=data_dict)
 
-    def register_authority_issuer(self, name, weId, nonce, data, signedMessage):
-        self.register_authority_issuer_first(name, weId, nonce)
-        return self.register_authority_issuer_second(nonce, data, signedMessage)
+    def register_authority_issuer(self, privKey, name, weId, nonce, signType="1"):
+
+        respBody = self.register_authority_issuer_first(name, weId, nonce)
+
+        encode_transaction = respBody['respBody']['encodedTransaction']
+
+        blockLimit = respBody['respBody']['blockLimit']
+
+        raw_result = self.weid_ecdsa_sign(privKey, encode_transaction)
+
+        authority_issuer_second = self.register_authority_issuer_second(nonce, data=respBody['respBody']['data'], blockLimit=blockLimit,
+                                                        signType=signType, signedMessage=raw_result)
+
+        return authority_issuer_second
+
 
     def create_cpt_first(self, weId, cptJsonSchema, cptSignature, nonce):
         # 创建CPT
@@ -90,13 +115,15 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/encode", data=data_dict)
 
-    def create_cpt_second(self, nonce, data, signedMessage):
+    def create_cpt_second(self, nonce, data, signedMessage, blockLimit, signType="1"):
         # 创建CPT
         data_dict = {
             "functionArg": {},
             "transactionArg": {
                 "nonce": nonce,
                 "data": data,
+                "blockLimit": blockLimit,
+                "signType": signType,
                 "signedMessage": signedMessage
             },
             "functionName": "registerCpt",
@@ -104,9 +131,21 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/transact", data=data_dict)
 
-    def create_cpt(self, name, weId, nonce, data, signedMessage):
-        self.register_authority_issuer_first(name, weId, nonce)
-        return self.register_authority_issuer_second(nonce, data, signedMessage)
+    def create_cpt(self, privKey, weId, cptJsonSchema, cptSignature, nonce, signType="1"):
+
+        respBody = self.create_cpt_first(weId, cptJsonSchema, cptSignature, nonce)
+
+        encode_transaction = respBody['respBody']['encodedTransaction']
+
+        blockLimit = respBody['respBody']['blockLimit']
+
+        raw_result = self.weid_ecdsa_sign(privKey, encode_transaction)
+
+        cpt_second = self.create_cpt_second(nonce, data=respBody['respBody']['data'], blockLimit=blockLimit,
+                                                        signType=signType, signedMessage=raw_result)
+
+        return cpt_second
+
 
     def create_credential_pojo(self, cptId, issuer_weid, expirationDate, claim):
         # 创建CredentialPojo
