@@ -147,7 +147,7 @@ class weidentityService(Base):
 
         return self.post("/weid/api/invoke", data=data_dict)
 
-    def verify_credentialpojo(self, cptId, issuanceDate, context, claim, credential_pojo_id, proof, issuerWeId, expirationDate):
+    def verify_credentialpojo(self, cptId, issuanceDate, context, claim, credential_pojo_id, proof, _type, issuerWeId, expirationDate):
         # 验证CredentialPojo
         data_dict = {
             "functionArg": {
@@ -157,10 +157,7 @@ class weidentityService(Base):
               "claim": claim,
               "id": credential_pojo_id,
               "proof": proof,
-              "type": [
-                  "VerifiableCredential",
-                  "hashTree"
-              ],
+              "type": _type,
               "issuer": issuerWeId,
               "expirationDate": expirationDate
             },
