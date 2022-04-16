@@ -6,7 +6,7 @@ from .Base import Base
 LOG = logging.getLogger(__name__)
 
 class weidentityService(Base):
-    def __init__(self, host, port=None, version="1.0.0"):
+    def __init__(self, host, port=None, version="2.0.0"):
         super(weidentityService, self).__init__(host, port, version)
 
     def create_weidentity_did(self, function_arg={}, transaction_arg={}):

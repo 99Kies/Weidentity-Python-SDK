@@ -5,11 +5,11 @@ import time
 LOG = logging.getLogger(__name__)
 
 class weidentityClient(Base):
-    def __init__(self, host, port=None, version="1.0.0"):
+    def __init__(self, host, port=None, version="2.0.0"):
         super(weidentityClient, self).__init__(host, port, version)
 
     def create_weidentity_did_first(self, publicKey, nonce):
-        # 创建WeIdentity DID
+        # First Create WeIdentity DID
         data_dict = {
             "functionArg": {
                 "publicKey": publicKey
@@ -23,7 +23,7 @@ class weidentityClient(Base):
         return self.post("/weid/api/encode", data=data_dict)
 
     def create_weidentity_did_second(self, nonce, data, signedMessage, blockLimit, signType="1"):
-        # 创建WeIdentity DID
+        # Second Create WeIdentity DID
         data_dict = {
             "functionArg": {},
             "transactionArg": {
@@ -38,7 +38,7 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/transact", data=data_dict)
 
-    def create_weidentity_did(self, privKey, nonce, signType="1"):
+    def create_weidentity_did(self, privKey, nonce=1, signType="1"):
         publicKey = self.priv_to_public(privKey)
         respBody = self.create_weidentity_did_first(publicKey, nonce)
         encode_transaction = respBody['respBody']['encodedTransaction']
@@ -83,7 +83,7 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/transact", data=data_dict)
 
-    def register_authority_issuer(self, privKey, name, weId, nonce, signType="1"):
+    def register_authority_issuer(self, privKey, name, weId, nonce=1, signType="1"):
 
         respBody = self.register_authority_issuer_first(name, weId, nonce)
 
@@ -131,7 +131,7 @@ class weidentityClient(Base):
         }
         return self.post("/weid/api/transact", data=data_dict)
 
-    def create_cpt(self, privKey, weId, cptJsonSchema, cptSignature, nonce, signType="1"):
+    def create_cpt(self, privKey, weId, cptJsonSchema, cptSignature, nonce=1, signType="1"):
 
         respBody = self.create_cpt_first(weId, cptJsonSchema, cptSignature, nonce)
 
